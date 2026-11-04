@@ -26,16 +26,13 @@ public class TestTeleOp extends OpMode {
     private Commands commands;
     private boolean flyWheelState, hoodState, rampState;
     private final Pose startPose = poseFactory.of(0, 0, 0);
-    private double flyWheelRatio = 0.0;
+
 
     public static double kP = 0.01, kI = 0.01, kD = 0.001, kF = 0.45, rotateSpeedDegPerSec = 220, drivePowerScale=1;
 
     private Movement movement;
 
-    private Command startFlyWheel2 = instant(() -> {
-        commands.flywheelLeft.setPower(flyWheelRatio);
-        commands.flywheelRight.setPower(flyWheelRatio);
-    });
+
 
     private double gatePose, hoodPose, rampPose;
     @Override
@@ -107,7 +104,7 @@ public class TestTeleOp extends OpMode {
             if (flyWheelState) {
                 schedule(commands.stopFlyWheel);
             } else {
-                schedule(startFlyWheel2);
+                schedule(commands.startFlyWheel);
             }
             flyWheelState = !flyWheelState;
         }
@@ -142,11 +139,19 @@ public class TestTeleOp extends OpMode {
             schedule(commands.autoHoodAngle);
         }
         if (gamepad1.dpadUpWasPressed()){
-            flyWheelRatio += 0.01;
+            commands.TARGET_RPM = 2900;
         }
         if (gamepad1.dpadDownWasPressed()){
-            flyWheelRatio -= 0.01;
+            commands.TARGET_RPM = 1500;
         }
+        if (gamepad1.dpadLeftWasPressed()){
+            commands.TARGET_RPM = 2200;
+        }
+        commands.updateFlywheel();   // в каждой итерации цикла
+
+        telemetry.addData("target rpm", commands.getFlywheelTargetRpm());
+        telemetry.addData("rpm", commands.getFlywheelRpm());
+        telemetry.addData("atSpeed", commands.flywheelAtSpeed());
 
         Scheduler.execute();
 
@@ -156,7 +161,7 @@ public class TestTeleOp extends OpMode {
         telemetry.addData("x", follower.pose().x());
         telemetry.addData("y", follower.pose().y());
         telemetry.addData("heading", follower.pose().heading());
-        telemetry.addData("fly wheel", flyWheelRatio);
+        telemetry.addData("fly wheel", commands.flyWheelRatio);
         telemetry.update();
 
     }
