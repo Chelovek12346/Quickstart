@@ -25,11 +25,11 @@ public class Commands {
     public static double TARGET_RPM = 1500;      // обороты маховика для startFlyWheel
     public static double TICKS_PER_REV = 28;     // ПРОВЕРЬ: проверни маховик на 10 оборотов и раздели getCurrentPosition() на 10
     public static double ENCODER_SIGN = 1;       // поставь -1, если при положительной мощности скорость отрицательная
-    public static double FLY_KV = 0.00043;       // мощность на 1 тик/с (старт: 1 / макс. тиков/с)
+    public static double FLY_KV = 0.00037;       // мощность на 1 тик/с (старт: 1 / макс. тиков/с)
     public static double FLY_KP = 0.0006;        // подними, пока не появятся колебания, потом убавь на 30%
-    public static double FLY_KS = 0.12;           // стартовая мощность (обычно 0)
+    public static double FLY_KS = 0.067;           // стартовая мощность (обычно 0)
     public static double FLY_ALPHA = 0.25;       // сглаживание скорости (0..1, меньше = плавнее)
-    public static double NOMINAL_VOLTAGE = 12.0;
+    public static double NOMINAL_VOLTAGE = 13.0;
     public static double AT_SPEED_TOL = 0.03;    // допуск ±3%
 
     private double flyTargetTicks = 0;           // тики/с
