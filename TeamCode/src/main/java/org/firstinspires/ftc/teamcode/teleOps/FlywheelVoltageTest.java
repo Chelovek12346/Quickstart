@@ -33,7 +33,7 @@ public class FlywheelVoltageTest extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        Commands commands = new Commands(hardwareMap);
+        Commands commands = new Commands(hardwareMap, telemetry);
         VoltageSensor battery = hardwareMap.voltageSensor.iterator().next();
 
         double volts = 0;
