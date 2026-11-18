@@ -180,8 +180,6 @@ public class Teleop extends OpMode {
 
         Scheduler.execute();
 
-        telemetry.addData("ramp", rampPose);
-        telemetry.addData("rpm", commands.getFlywheelRpm());
         telemetry.addData("Target Heading:", targetHeading);
         telemetry.addData("x", follower.pose().x());
         telemetry.addData("y", follower.pose().y());

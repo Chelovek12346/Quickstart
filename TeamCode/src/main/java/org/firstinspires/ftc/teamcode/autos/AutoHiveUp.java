@@ -37,7 +37,7 @@ public class AutoHiveUp extends OpMode {
     private final Pose startPose = poseFactory.of(8.21, 88.72, 180);
     private final Pose prepareIntakeGardenPose = poseFactory.of(20, 134.72, 180);
     private final Pose intakeGardenPose = poseFactory.of(10, 134.72, 180);
-    private final Pose shootGardenPose = poseFactory.of(120, 120, 45);
+    private final Pose shootGardenPose = poseFactory.of(14, 104, 180);
     private final Pose prepareIntakeFarFlowerPose = poseFactory.of(117, 96, 0);
     private final Pose intakeFarFlowerPose = poseFactory.of(128, 96, 0);
     private final Pose shootFarFlowerPose = poseFactory.of(117, 96, 0);
@@ -126,7 +126,7 @@ public class AutoHiveUp extends OpMode {
                 commands.startIntake,
                 commands.startTransfer,
 //                follow(follower, intakeGarden()),
-                driveOnTimer(0.5,1000),
+                driveOnTimer(commands.FLOWER_INTAKE_POWER,1000),
                 commands.stopIntake,
                 commands.stopTransfer,
                 follow(follower, shootGarden()),
@@ -137,7 +137,7 @@ public class AutoHiveUp extends OpMode {
                 follow(follower, prepareIntakeFarFlower()),
                 commands.startIntake,
                 commands.startTransfer,
-                driveOnTimer(0.5,1000),
+                driveOnTimer(commands.FLOWER_INTAKE_POWER,1000),
                 waitMs(1000),
                 commands.stopIntake,
                 commands.stopTransfer,

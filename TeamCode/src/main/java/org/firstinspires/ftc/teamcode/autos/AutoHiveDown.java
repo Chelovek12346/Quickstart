@@ -118,7 +118,7 @@ public class AutoHiveDown extends OpMode {
                 commands.startIntake,
                 commands.startTransfer,
 //                follow(follower, intakeFarFlower()),
-                driveOnTimer(0.5,1000),
+                driveOnTimer(commands.FLOWER_INTAKE_POWER,1000),
                 waitMs(1000),
                 commands.stopIntake,
                 commands.stopTransfer,

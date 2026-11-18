@@ -29,21 +29,22 @@ public class Commands {
     private final VoltageSensor battery;
 
     // ---------------- Регулятор маховика ----------------
-    public static double targetRpm = 0;      // обороты маховика для startFlyWheel
+    public double targetRpm = 0;      // обороты маховика для startFlyWheel
     public static double TICKS_PER_REV = 28;     // ПРОВЕРЬ: проверни маховик на 10 оборотов и раздели getCurrentPosition() на 10
     public static double ENCODER_SIGN = 1;       // поставь -1, если при положительной мощности скорость отрицательная
-    public static double FLY_KV = 0.00038;       // мощность на 1 тик/с (старт: 1 / макс. тиков/с)
-    public static double FLY_KP = 0.0006;        // подними, пока не появятся колебания, потом убавь на 30%
-    public static double FLY_KS = 0.071;           // стартовая мощность (обычно 0)
+    public static double FLY_KV = 0.0021;       // мощность на 1 тик/с (старт: 1 / макс. тиков/с)
+    public static double FLY_KP = 0.004;        // подними, пока не появятся колебания, потом убавь на 30%
+    public static double FLY_KS = 1.3721;           // стартовая мощность (обычно 0)
     public static double FLY_ALPHA = 0.25;       // сглаживание скорости (0..1, меньше = плавнее)
     public static double NOMINAL_VOLTAGE = 13.0;
-    public static double AT_SPEED_TOL = 0.03;    // допуск ±3%
+    public static double AT_SPEED_TOL = 0.07;    // допуск ±3%
 
-    public static double GOAL_H = 64;
+    public static double GOAL_H = 50.89;
     public static double PEAK_DISTANCE = 0;
     public static double BALL_CONSTANT = 625;
+    public double FLOWER_INTAKE_POWER = 0.3;
 
-    private double flyTargetTicks = 0;           // тики/с
+    public double realRPM = 0;
     private double flyVel = 0;                   // сглаженная скорость, тики/с
     private boolean flyVelInit = false;
     private double hoodAngle = 0;
@@ -55,6 +56,10 @@ public class Commands {
     Telemetry telemetry;
 
     boolean flyWheelState, isLeftHive;
+
+    public double TPS2RPM(double TPS){
+        return TPS * 60.0 / TICKS_PER_REV;
+    }
 
     public Commands(HardwareMap hardwareMap, Telemetry telemetry) {
         this.telemetry = telemetry;
@@ -91,38 +96,32 @@ public class Commands {
     /** ВЫЗЫВАТЬ В КАЖДОМ ЦИКЛЕ OpMode (teleop и auto). */
     public void updateFlywheel() {
         if (!flyWheelState) {
-            flyTargetTicks = 0;
             flywheelLeft.setPower(0);
             flywheelRight.setPower(0);
             return;
         }
-        flyTargetTicks = targetRpm / 60.0 * TICKS_PER_REV;
 
-        if (flyTargetTicks <= 0) return;   // регулятор выключен, моторы не трогаем
+        realRPM = ENCODER_SIGN * TPS2RPM(flywheelLeft.getVelocity());
 
-        double raw = ENCODER_SIGN * flywheelLeft.getVelocity();   // тики/с
-        if (!flyVelInit) { flyVel = raw; flyVelInit = true; }
-        else flyVel += FLY_ALPHA * (raw - flyVel);
-
-        double ff = FLY_KS + FLY_KV * flyTargetTicks;
-        double pid = FLY_KP * (flyTargetTicks - flyVel);
+        double ff = FLY_KS + FLY_KV * targetRpm;
+        double pid = FLY_KP * (targetRpm - realRPM);
 
         telemetry.addData("ff", ff);
         telemetry.addData("pid", pid);
 
         double volt = battery.getVoltage();
-        double scale = volt > 1.0 ? NOMINAL_VOLTAGE / volt : 1.0;   // компенсация просадки батареи
 
-        double power = Math.max(0, Math.min(1, (ff + pid) * scale));
+        double power = Math.max(0, Math.min(1, (ff + pid) / volt));
         flywheelLeft.setPower(power);
         flywheelRight.setPower(power);
     }
 
     public boolean flywheelAtSpeed() {
-        return flyTargetTicks > 0 && Math.abs(flyTargetTicks - flyVel) < AT_SPEED_TOL * flyTargetTicks;
+//        return targetRpm > 0 && Math.abs(flyTargetTicks - flyVel) < AT_SPEED_TOL * flyTargetTicks;
+        return targetRpm > 0;
     }
     public double getFlywheelRpm() { return flyVel / TICKS_PER_REV * 60.0; }
-    public double getFlywheelTargetRpm() { return flyTargetTicks / TICKS_PER_REV * 60.0; }
+    public double getFlywheelTargetRpm() { return targetRpm; }
 
     public Command closeGate = instant(() -> gate.setPosition(Config.gateClosePose));
     public Command openGate = instant(() -> gate.setPosition(Config.gateOpenPose));
@@ -166,7 +165,8 @@ public class Commands {
 
         telemetry.addData("Distance", distance);
         telemetry.addData("Target RPM", targetRpm);
-        telemetry.addData("Target Angle", normalizeAngle(iterHeading + 180));
+        telemetry.addData("RPM", realRPM);
+        telemetry.addData("RPM diff", targetRpm-realRPM);
 
         return iterHeading;
     }
