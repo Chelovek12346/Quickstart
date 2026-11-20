@@ -40,10 +40,10 @@ public class DownEightPark extends OpMode {
     // Poses
     private final Pose startPose = poseFactory.of(144 - 8.21, 79.28, 0);
     private final Pose shootPreloadPose = poseFactory.of(144 - 8.21 - 5, 79.28, 0);
-    private final Pose prepareIntakeFarFlowerPose = poseFactory.of(117, 93, 0);
+    private final Pose prepareIntakeFarFlowerPose = poseFactory.of(117, 96, 0);
     private final Pose intakeFarFlowerPose = poseFactory.of(132, 96, 0);
     private final Pose shootFarFlowerPose = poseFactory.of(144 - 8.21 - 5, 79.28, 0);
-    private final Pose parkPose = poseFactory.of(125, 134.72, 0);
+    private final Pose parkPose = poseFactory.of(125, 132.72, 0);
 
     // Path methods
     private Path shootPreload() {
@@ -56,13 +56,18 @@ public class DownEightPark extends OpMode {
         return line(prepareIntakeFarFlowerPose, intakeFarFlowerPose).linear(prepareIntakeFarFlowerPose, intakeFarFlowerPose);
     }
     private Path shootFarFlower() {
-        return line(intakeFarFlowerPose, shootFarFlowerPose).linear(intakeFarFlowerPose, shootFarFlowerPose);
+        return line(prepareIntakeFarFlowerPose, shootFarFlowerPose).linear(prepareIntakeFarFlowerPose, shootFarFlowerPose);
     }
+
     private Path backFarFlower() {
         return line(intakeFarFlowerPose, prepareIntakeFarFlowerPose).linear(intakeFarFlowerPose, prepareIntakeFarFlowerPose);
     }
+
+    private Path preparePark() {
+        return line(shootFarFlowerPose, prepareIntakeFarFlowerPose).linear(shootFarFlowerPose, prepareIntakeFarFlowerPose);
+    }
     private Path park() {
-        return line(shootFarFlowerPose, parkPose).linear(shootFarFlowerPose, parkPose);
+        return line(prepareIntakeFarFlowerPose, parkPose).linear(prepareIntakeFarFlowerPose, parkPose);
     }
     private Command autoRoutine;
 
@@ -134,6 +139,7 @@ public class DownEightPark extends OpMode {
                 waitUntil(() -> commands.flywheelAtSpeed()),
                 stopShoot,commands.raiseRamp,
                 shoot,
+                follow(follower, preparePark()),
                 follow(follower, park()),
                 commands.stopFlyWheel
         );
