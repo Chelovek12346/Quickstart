@@ -1,30 +1,30 @@
 package org.firstinspires.ftc.teamcode.autos;
 
-import com.pedropathing.ivy.Command;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.pedropathing.follower.Follower;
-
-import org.firstinspires.ftc.teamcode.Commands;
-import org.firstinspires.ftc.teamcode.Movement;
-import org.firstinspires.ftc.teamcode.Storage;
-import org.firstinspires.ftc.teamcode.pedro.Constants;
-import com.pedropathing.api.PoseFactory;
-import com.pedropathing.math.Pose;
-import static com.pedropathing.api.Paths.*;
-import com.pedropathing.paths.Path;
-import com.pedropathing.ivy.Scheduler;
-import com.qualcomm.robotcore.util.ElapsedTime;
-
+import static com.pedropathing.api.Paths.line;
 import static com.pedropathing.ivy.Scheduler.schedule;
 import static com.pedropathing.ivy.commands.Commands.waitMs;
 import static com.pedropathing.ivy.commands.Commands.waitUntil;
 import static com.pedropathing.ivy.groups.Groups.sequential;
 import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 
+import com.pedropathing.api.PoseFactory;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.ivy.Command;
+import com.pedropathing.ivy.Scheduler;
+import com.pedropathing.math.Pose;
+import com.pedropathing.paths.Path;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.teamcode.Commands;
+import org.firstinspires.ftc.teamcode.Movement;
+import org.firstinspires.ftc.teamcode.Storage;
+import org.firstinspires.ftc.teamcode.pedro.Constants;
+
 
 @Autonomous
-public class AutoHiveUpAqqu extends OpMode {
+public class AutoHiveUpFull_all_in extends OpMode {
     private Follower follower;
     private Commands commands;
     private ElapsedTime runtime;
@@ -50,17 +50,11 @@ public class AutoHiveUpAqqu extends OpMode {
     private Path prepareIntakeGarden() {
         return line(startPose, prepareIntakeGardenPose).linear(startPose, prepareIntakeGardenPose);
     }
-    private Path intakeGarden() {
-        return line(prepareIntakeGardenPose, intakeGardenPose).linear(prepareIntakeGardenPose, intakeGardenPose);
-    }
     private Path shootGarden() {
-        return line(intakeGardenPose, shootGardenPose).linear(intakeGardenPose, shootGardenPose);
+        return line(intakeGardenPose, shootNearFlowerPose).linear(intakeGardenPose, shootNearFlowerPose);
     }
     private Path prepareIntakeNearFlower() {
         return line(shootGardenPose, prepareIntakeNearFlower).linear(shootGardenPose, prepareIntakeNearFlower);
-    }
-    private Path intakeNearFlower() {
-        return line(prepareIntakeNearFlower, intakeNearFlower).linear(prepareIntakeNearFlower, intakeNearFlower);
     }
     private Path prepareShootNearFlower() {
         return line(intakeNearFlower, prepareParkPose).linear(intakeNearFlower, prepareParkPose);
@@ -71,11 +65,8 @@ public class AutoHiveUpAqqu extends OpMode {
     private Path prepareIntakeFarFlower() {
         return line(shootNearFlowerPose, prepareIntakeFarFlowerPose).linear(shootNearFlowerPose, prepareIntakeFarFlowerPose);
     }
-    private Path intakeFarFlower() {
-        return line(prepareIntakeFarFlowerPose, intakeFarFlowerPose).linear(prepareIntakeFarFlowerPose, intakeFarFlowerPose);
-    }
     private Path shootFarFlower() {
-        return line(intakeFarFlowerPose, shootFarFlowerPose).linear(intakeFarFlowerPose, shootFarFlowerPose);
+        return line(intakeFarFlowerPose, shootGardenPose).linear(intakeFarFlowerPose, shootGardenPose);
     }
     private Path park() {
         return line(shootFarFlowerPose, parkPose).linear(shootFarFlowerPose, parkPose);
@@ -129,6 +120,7 @@ public class AutoHiveUpAqqu extends OpMode {
                 waitUntil(() -> commands.flywheelAtSpeed()),
                 shoot,
                 stopShoot,
+                commands.aimLeftHive,
                 follow(follower, prepareIntakeGarden()),
                 commands.startIntake,
                 commands.startTransfer,
@@ -140,7 +132,6 @@ public class AutoHiveUpAqqu extends OpMode {
                 shoot,
                 commands.lowerRamp,
                 stopShoot,
-                commands.aimLeftHive,
                 follow(follower, prepareIntakeNearFlower()),
                 commands.startIntake,
                 commands.startTransfer,
@@ -154,6 +145,7 @@ public class AutoHiveUpAqqu extends OpMode {
                 waitUntil(() -> commands.flywheelAtSpeed()),
                 shoot,
                 stopShoot,
+                commands.aimRightHive,
                 commands.lowerRamp,
                 commands.startIntake,
                 commands.startTransfer,

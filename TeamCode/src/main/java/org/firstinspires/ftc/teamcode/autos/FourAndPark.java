@@ -16,7 +16,6 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.ivy.Scheduler;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import static com.pedropathing.ivy.Scheduler.isScheduled;
 import static com.pedropathing.ivy.Scheduler.schedule;
 import static com.pedropathing.ivy.commands.Commands.waitMs;
 import static com.pedropathing.ivy.groups.Groups.sequential;
@@ -24,7 +23,7 @@ import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 
 
 @Autonomous
-public class AutoPark extends OpMode {
+public class FourAndPark extends OpMode {
     private Follower follower;
     private Commands commands;
     private ElapsedTime runtime;

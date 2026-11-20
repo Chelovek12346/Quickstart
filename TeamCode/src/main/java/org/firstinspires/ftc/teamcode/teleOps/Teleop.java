@@ -178,6 +178,22 @@ public class Teleop extends OpMode {
             follower.setPose(poseFactory.of(8, 136.72, 0));
         }
 
+//        if (gamepad1.dpadUpWasPressed()) {
+//            commands.targetRpm += 50;
+//        }
+//
+//        if (gamepad1.dpadDownWasPressed()) {
+//            commands.targetRpm -= 50;
+//        }
+//
+//        if (gamepad1.dpadLeftWasPressed()) {
+//            commands.targetRpm -= 10;
+//        }
+//
+//        if (gamepad1.dpadRightWasPressed()) {
+//            commands.targetRpm += 10;
+//        }
+
         Scheduler.execute();
 
         telemetry.addData("Target Heading:", targetHeading);

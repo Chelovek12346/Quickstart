@@ -2,6 +2,8 @@ package org.firstinspires.ftc.teamcode;
 
 import static com.pedropathing.ivy.commands.Commands.instant;
 
+import static java.lang.Math.sin;
+
 import com.pedropathing.api.PoseFactory;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.math.Pose;
@@ -33,13 +35,13 @@ public class Commands {
     public static double TICKS_PER_REV = 28;     // ПРОВЕРЬ: проверни маховик на 10 оборотов и раздели getCurrentPosition() на 10
     public static double ENCODER_SIGN = 1;       // поставь -1, если при положительной мощности скорость отрицательная
     public static double FLY_KV = 0.0021;       // мощность на 1 тик/с (старт: 1 / макс. тиков/с)
-    public static double FLY_KP = 0.004;        // подними, пока не появятся колебания, потом убавь на 30%
+    public static double FLY_KP = 0.0065;        // подними, пока не появятся колебания, потом убавь на 30%
     public static double FLY_KS = 1.3721;           // стартовая мощность (обычно 0)
     public static double FLY_ALPHA = 0.25;       // сглаживание скорости (0..1, меньше = плавнее)
     public static double NOMINAL_VOLTAGE = 13.0;
     public static double AT_SPEED_TOL = 0.07;    // допуск ±3%
 
-    public static double GOAL_H = 50.89;
+    public static double GOAL_H = 50.36;
     public static double PEAK_DISTANCE = 0;
     public static double BALL_CONSTANT = 625;
     public double FLOWER_INTAKE_POWER = 0.3;
@@ -49,8 +51,8 @@ public class Commands {
     private boolean flyVelInit = false;
     private double hoodAngle = 0;
     private final PoseFactory poseFactory = PoseFactory.degrees();
-    private final Pose leftHive = poseFactory.of(144-53, 86, 0);
-    private final Pose rightHive = poseFactory.of(53, 86, 0);
+    private final Pose leftHive = poseFactory.of(144-53.419, 84.75, 0);
+    private final Pose rightHive = poseFactory.of(53.419, 84.75, 0); // mozhno menyat X
     double k = (Config.hoodDownPose - Config.hoodUpPose) / (Config.hoodDownAngle - Config.hoodUpAngle);
     double b = Config.hoodDownPose - Config.hoodDownAngle * k;
     Telemetry telemetry;
@@ -117,10 +119,11 @@ public class Commands {
     }
 
     public boolean flywheelAtSpeed() {
-//        return targetRpm > 0 && Math.abs(flyTargetTicks - flyVel) < AT_SPEED_TOL * flyTargetTicks;
-        return targetRpm > 0;
+        return flyWheelState
+                && targetRpm > 0
+                && Math.abs(targetRpm - realRPM) < AT_SPEED_TOL * targetRpm;
     }
-    public double getFlywheelRpm() { return flyVel / TICKS_PER_REV * 60.0; }
+    public double getFlywheelRpm() { return realRPM; }
     public double getFlywheelTargetRpm() { return targetRpm; }
 
     public Command closeGate = instant(() -> gate.setPosition(Config.gateClosePose));
@@ -142,6 +145,7 @@ public class Commands {
     public Command aimRightHive = instant(() -> isLeftHive = false);
 
     public double updateCalculations(Pose pose, double distanceTrimInches) {
+        double K=2300;
         double virtualDist = 0;
         double iterVel = getFlywheelRpm();
         double iterAngle = hoodAngle;
@@ -152,13 +156,14 @@ public class Commands {
 
         Pose hive = isLeftHive ? leftHive : rightHive;
 
-        double distance = Math.hypot(robotX - hive.x(), robotY - hive.y()) - 5 + distanceTrimInches;
+        double distance = Math.max(Math.hypot(robotX - hive.x(), robotY - hive.y()) - 5 + distanceTrimInches, 0);
 
         iterAngle = Math.toDegrees(Math.atan(2 * GOAL_H / distance));
 
         double iterHeading = normalizeAngle(180 + Math.toDegrees(Math.atan2(hive.y() - robotY, hive.x() - robotX)));
 
-        targetRpm = 12.542 * distance + 1902;
+        targetRpm = K/sin(Math.toRadians(iterAngle));
+
         hoodAngle = iterAngle;
 
         setHoodPose(hoodAngle);
@@ -167,6 +172,8 @@ public class Commands {
         telemetry.addData("Target RPM", targetRpm);
         telemetry.addData("RPM", realRPM);
         telemetry.addData("RPM diff", targetRpm-realRPM);
+        telemetry.addData("angle", iterAngle);
+
 
         return iterHeading;
     }

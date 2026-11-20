@@ -22,6 +22,9 @@ import static com.pedropathing.ivy.commands.Commands.waitUntil;
 import static com.pedropathing.ivy.groups.Groups.sequential;
 import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 
+//
+
+//Ждем вначале чтобы альянс перевернул, мы с нидней стороны
 
 @Autonomous
 public class AutoHiveDown extends OpMode {
@@ -29,7 +32,8 @@ public class AutoHiveDown extends OpMode {
     private Commands commands;
     private ElapsedTime runtime;
     private double shootTime;
-    public static double drivekP = 0.01, drivekI = 0.01, shootkP = 0.03, shootkI = 0.013, kD = 0.001, kF = 0, rotateSpeedDegPerSec = 220, drivePowerScale=1;
+    public static double drivekP = 0.01, drivekI = 0.01, shootkP = 0.03, shootkI = 0.013, kD = 0.001, kF = 0,
+            rotateSpeedDegPerSec = 220, drivePowerScale=1;
     private Movement movement;
     private double targetHeading;
     private final PoseFactory poseFactory = PoseFactory.degrees();
