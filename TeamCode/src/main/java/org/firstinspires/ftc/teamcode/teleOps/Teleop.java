@@ -96,7 +96,8 @@ public class Teleop extends OpMode {
         movement.drive(
                 xField,
                 yField,
-                rotate,
+                gamepad1.right_stick_x,    // стик вправо
+                -gamepad1.right_stick_y,   // стик вверх
                 Math.toDegrees(heading),
                 shooting,
                 targetHeading

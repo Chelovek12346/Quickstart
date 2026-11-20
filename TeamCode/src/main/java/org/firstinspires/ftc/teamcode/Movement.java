@@ -1,29 +1,29 @@
 package org.firstinspires.ftc.teamcode;
 
-import com.pedropathing.follower.Follower;
-import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
-public class Movement{
+public class Movement {
 
     // Motors
     private DcMotor frontLeft, frontRight, backLeft, backRight;
-
-    // Pedro localizer
 
     // PID
     private double drivekP, drivekI, kD, kF, shootkP, shootkI;
     private double integral = 0;
     private double lastError = 0;
 
-    private boolean allianceBlue;
-
     // Config
     private final double rotateSpeedDegPerSec;
     private double drivePowerScale;
     private double targetHeading;
+
+    // Правый стик: насколько сильно его нужно отклонить, чтобы выбрать новое направление
+    public static double SNAP_DEADZONE = 0.5;
+    // Поворот всей «розы» направлений. Если робот смотрит не туда, куда стик —
+    // поставь 90, 180 или -90
+    public static double SNAP_OFFSET_DEG = 0;
 
     // Timing
     private long lastTime = System.nanoTime();
@@ -35,7 +35,6 @@ public class Movement{
             double drivePowerScale,
             double heading
     ) {
-
         frontLeft  = hardwareMap.get(DcMotor.class, "frontLeftMotor");
         frontRight = hardwareMap.get(DcMotor.class, "frontRightMotor");
         backLeft   = hardwareMap.get(DcMotor.class, "backLeftMotor");
@@ -55,32 +54,56 @@ public class Movement{
         this.rotateSpeedDegPerSec = rotateSpeedDegPerSec;
         this.drivePowerScale = drivePowerScale;
 
-        targetHeading = heading;
+        targetHeading = normalizeAngle(heading);
     }
-    public void setPowerAll(double power){
+
+    public void setPowerAll(double power) {
         frontLeft.setPower(power);
         frontRight.setPower(power);
         backLeft.setPower(power);
         backRight.setPower(power);
     }
-    public void drive(double x, double y, double rotateStick, double heading, boolean shooting, double calculatedTarget) {
-        heading = normalizeAngle(heading);
 
+    /**
+     * @param x, y             движение в системе робота (как раньше)
+     * @param stickRight       правый стик вправо  (gamepad.right_stick_x)
+     * @param stickUp          правый стик вверх   (-gamepad.right_stick_y)
+     * @param heading          текущий угол робота, градусы
+     * @param shooting         true — автонаводка на calculatedTarget (любой угол)
+     * @param calculatedTarget угол на цель, градусы
+     */
+    public void drive(double x, double y, double stickRight, double stickUp,
+                      double heading, boolean shooting, double calculatedTarget) {
+        heading = normalizeAngle(heading);
         double deltaTime = getDeltaTimeSec();
 
         double kP, kI;
+        double newTarget = targetHeading;
 
         if (shooting) {
-            targetHeading = calculatedTarget;
+            // Автонаводка — точный угол, без округления до 90°
+            newTarget = calculatedTarget;
             kP = shootkP;
             kI = shootkI;
         } else {
+            // Стик отклонён достаточно — выбираем одно из 4 направлений.
+            // Диагонали делят стик на 4 сектора: это то же самое,
+            // что округлить угол стика до ближайших 90°.
+            if (Math.hypot(stickRight, stickUp) > SNAP_DEADZONE) {
+                newTarget = snapTo90(stickAngleToField(stickRight, stickUp));
+            }
+            // Стик отпущен — держим последний угол
             kP = drivekP;
             kI = drivekI;
         }
 
-        targetHeading += rotateStick * rotateSpeedDegPerSec * deltaTime;
-        targetHeading = normalizeAngle(targetHeading);
+        newTarget = normalizeAngle(newTarget);
+
+        // Цель сильно сменилась — сбрасываем интеграл, чтобы не тащить старую ошибку
+        if (Math.abs(normalizeAngle(newTarget - targetHeading)) > 5) {
+            integral = 0;
+        }
+        targetHeading = newTarget;
 
         double error = normalizeAngle(heading - targetHeading);
         integral = Math.max(-0.3, Math.min(0.3, integral * 0.9 + error * deltaTime));
@@ -88,15 +111,11 @@ public class Movement{
 
         double rx = kP * error
                 + kI * integral
-                + kD * derivative
-                - kF * rotateStick;
+                + kD * derivative;
 
         lastError = error;
 
-        double denominator = Math.max(
-                Math.abs(y) + Math.abs(x) + Math.abs(rx),
-                1
-        );
+        double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(rx), 1);
 
         double frontLeftPower  = (y + x + rx) / denominator * drivePowerScale;
         double backLeftPower   = (y - x + rx) / denominator * drivePowerScale;
@@ -109,25 +128,38 @@ public class Movement{
         backRight.setPower(backRightPower);
     }
 
+    /**
+     * Направление стика -> угол на поле.
+     * Использует ту же систему координат, что и field-centric езда в Teleop:
+     * стик вверх = поле -Y, стик вправо = поле -X.
+     */
+    private double stickAngleToField(double stickRight, double stickUp) {
+        double fieldX = -stickRight;
+        double fieldY = -stickUp;
+        return Math.toDegrees(Math.atan2(fieldY, fieldX)) + SNAP_OFFSET_DEG;
+    }
+
+    /** Округление до ближайшего из 0, 90, 180, 270 (-90) градусов. */
+    private double snapTo90(double angleDeg) {
+        return normalizeAngle(Math.round(angleDeg / 90.0) * 90.0);
+    }
+
+    public double getTargetHeading() {
+        return targetHeading;
+    }
+
     public void align(double heading, double calculatedTarget) {
         heading = normalizeAngle(heading);
-
         double deltaTime = getDeltaTimeSec();
 
-        double kP, kI;
-
-        targetHeading = calculatedTarget;
-        kP = shootkP;
-        kI = shootkI;
-
-        targetHeading = normalizeAngle(targetHeading);
+        targetHeading = normalizeAngle(calculatedTarget);
 
         double error = normalizeAngle(heading - targetHeading);
         integral = Math.max(-0.3, Math.min(0.3, integral * 0.9 + error * deltaTime));
         double derivative = (error - lastError) / deltaTime;
 
-        double rx = kP * error
-                + kI * integral
+        double rx = shootkP * error
+                + shootkI * integral
                 + kD * derivative
                 + kF * (error > 0 ? 1 : -1);
 
@@ -139,15 +171,10 @@ public class Movement{
             rx = 0;
         }
 
-        double frontLeftPower  = rx / denominator * drivePowerScale;
-        double backLeftPower   = rx / denominator * drivePowerScale;
-        double frontRightPower = -rx / denominator * drivePowerScale;
-        double backRightPower  = -rx / denominator * drivePowerScale;
-
-        frontLeft.setPower(frontLeftPower);
-        backLeft.setPower(backLeftPower);
-        frontRight.setPower(frontRightPower);
-        backRight.setPower(backRightPower);
+        frontLeft.setPower(rx / denominator * drivePowerScale);
+        backLeft.setPower(rx / denominator * drivePowerScale);
+        frontRight.setPower(-rx / denominator * drivePowerScale);
+        backRight.setPower(-rx / denominator * drivePowerScale);
     }
 
     public void setDrivePowerScale(double scale) {
@@ -164,8 +191,6 @@ public class Movement{
         long now = System.nanoTime();
         double dt = (now - lastTime) / 1e9;
         lastTime = now;
-        return dt;
+        return Math.max(dt, 1e-3); // защита от деления на ноль
     }
-
-
 }

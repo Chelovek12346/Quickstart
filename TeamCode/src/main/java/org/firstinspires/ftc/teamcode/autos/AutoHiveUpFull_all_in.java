@@ -38,10 +38,10 @@ public class AutoHiveUpFull_all_in extends OpMode {
     private final Pose prepareIntakeGardenPose = poseFactory.of(20, 134.72, 180);
     private final Pose intakeGardenPose = poseFactory.of(10, 134.72, 180);
     private final Pose shootGardenPose = poseFactory.of(14, 104, 180);
-    private final Pose prepareIntakeNearFlower = poseFactory.of(48, 120, 90);
+    private final Pose prepareIntakeNearFlower = poseFactory.of(44, 120, 90);
     private final Pose intakeNearFlower = poseFactory.of(48, 130, 90);
     private final Pose prepareParkPose = poseFactory.of(48, 120, 90);
-    private final Pose parkPose = poseFactory.of(100, 132, 0);
+    private final Pose parkPose = poseFactory.of(95, 132, 0);
     private final Pose shootNearFlowerPose = poseFactory.of(120, 105, 45);
     private final Pose intakeFarFlowerPose = poseFactory.of(127, 96, 0);
     private final Pose shootFarFlowerPose = poseFactory.of(124, 88, 0);
@@ -159,6 +159,7 @@ public class AutoHiveUpFull_all_in extends OpMode {
                 waitUntil(() -> commands.flywheelAtSpeed()),
                 shoot,
                 stopShoot,
+                follow(follower,park()),
                 commands.stopFlyWheel
         );
     }

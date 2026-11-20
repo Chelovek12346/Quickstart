@@ -45,6 +45,8 @@ public class Commands {
     public static double PEAK_DISTANCE = 0;
     public static double BALL_CONSTANT = 625;
     public double FLOWER_INTAKE_POWER = 0.3;
+    public static double Flywheel_K=3.9604;
+    public static double Flywheel_B=2090.35;
 
     public double realRPM = 0;
     private double flyVel = 0;                   // сглаженная скорость, тики/с
@@ -145,7 +147,7 @@ public class Commands {
     public Command aimRightHive = instant(() -> isLeftHive = false);
 
     public double updateCalculations(Pose pose, double distanceTrimInches) {
-        double K=2300;
+
         double virtualDist = 0;
         double iterVel = getFlywheelRpm();
         double iterAngle = hoodAngle;
@@ -161,8 +163,8 @@ public class Commands {
         iterAngle = Math.toDegrees(Math.atan(2 * GOAL_H / distance));
 
         double iterHeading = normalizeAngle(180 + Math.toDegrees(Math.atan2(hive.y() - robotY, hive.x() - robotX)));
-
-        targetRpm = K/sin(Math.toRadians(iterAngle));
+        double Flywheel_coeff = Flywheel_K*distance+Flywheel_B;
+        targetRpm = Flywheel_coeff/sin(Math.toRadians(iterAngle));
 
         hoodAngle = iterAngle;
 

@@ -27,7 +27,7 @@ import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 //Ждем вначале чтобы альянс перевернул, мы с нидней стороны
 
 @Autonomous
-public class AutoHiveDown extends OpMode {
+public class DownEightPark extends OpMode {
     private Follower follower;
     private Commands commands;
     private ElapsedTime runtime;
@@ -39,11 +39,11 @@ public class AutoHiveDown extends OpMode {
     private final PoseFactory poseFactory = PoseFactory.degrees();
     // Poses
     private final Pose startPose = poseFactory.of(144 - 8.21, 79.28, 0);
-    private final Pose shootPreloadPose = poseFactory.of(144 - 8.21 - 10, 79.28, 0);
-    private final Pose prepareIntakeFarFlowerPose = poseFactory.of(117, 96, 0);
+    private final Pose shootPreloadPose = poseFactory.of(144 - 8.21 - 5, 79.28, 0);
+    private final Pose prepareIntakeFarFlowerPose = poseFactory.of(117, 93, 0);
     private final Pose intakeFarFlowerPose = poseFactory.of(132, 96, 0);
-    private final Pose shootFarFlowerPose = poseFactory.of(117, 96, 0);
-    private final Pose parkPose = poseFactory.of(96, 134.72, 0);
+    private final Pose shootFarFlowerPose = poseFactory.of(144 - 8.21 - 5, 79.28, 0);
+    private final Pose parkPose = poseFactory.of(125, 134.72, 0);
 
     // Path methods
     private Path shootPreload() {
@@ -57,6 +57,9 @@ public class AutoHiveDown extends OpMode {
     }
     private Path shootFarFlower() {
         return line(intakeFarFlowerPose, shootFarFlowerPose).linear(intakeFarFlowerPose, shootFarFlowerPose);
+    }
+    private Path backFarFlower() {
+        return line(intakeFarFlowerPose, prepareIntakeFarFlowerPose).linear(intakeFarFlowerPose, prepareIntakeFarFlowerPose);
     }
     private Path park() {
         return line(shootFarFlowerPose, parkPose).linear(shootFarFlowerPose, parkPose);
@@ -114,23 +117,23 @@ public class AutoHiveDown extends OpMode {
         autoRoutine = sequential(
                 commands.startFlyWheel,
                 follow(follower, shootPreload()),
-                waitUntil(() -> commands.flywheelAtSpeed()),
+                waitMs(1000),
                 shoot,
                 stopShoot,
                 commands.lowerRamp,
                 follow(follower, prepareIntakeFarFlower()),
                 commands.startIntake,
                 commands.startTransfer,
-//                follow(follower, intakeFarFlower()),
-                driveOnTimer(commands.FLOWER_INTAKE_POWER,1000),
-                waitMs(1000),
+                driveOnTimer(commands.FLOWER_INTAKE_POWER,1500),
+                waitMs(1500),
                 commands.stopIntake,
                 commands.stopTransfer,
+                follow(follower,backFarFlower()),
                 follow(follower, shootFarFlower()),
-                commands.raiseRamp,
+
                 waitUntil(() -> commands.flywheelAtSpeed()),
+                stopShoot,commands.raiseRamp,
                 shoot,
-                stopShoot,
                 follow(follower, park()),
                 commands.stopFlyWheel
         );

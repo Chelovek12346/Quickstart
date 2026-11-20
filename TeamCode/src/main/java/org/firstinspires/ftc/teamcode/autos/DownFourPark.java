@@ -23,7 +23,7 @@ import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 
 
 @Autonomous
-public class FourAndPark extends OpMode {
+public class DownFourPark extends OpMode {
     private Follower follower;
     private Commands commands;
     private ElapsedTime runtime;

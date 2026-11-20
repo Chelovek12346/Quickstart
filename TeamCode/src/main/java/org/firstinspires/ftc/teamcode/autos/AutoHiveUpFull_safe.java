@@ -35,13 +35,13 @@ public class AutoHiveUpFull_safe extends OpMode {
     private final PoseFactory poseFactory = PoseFactory.degrees();
     // Poses
     private final Pose startPose = poseFactory.of(8.21, 88.72, 180);
-    private final Pose prepareIntakeGardenPose = poseFactory.of(20, 134.72, 180);
+    private final Pose prepareIntakeGardenPose = poseFactory.of(20, 134.72, 188);
     private final Pose intakeGardenPose = poseFactory.of(10, 134.72, 180);
     private final Pose shootGardenPose = poseFactory.of(14, 104, 180);
-    private final Pose prepareIntakeNearFlower = poseFactory.of(48, 120, 90);
-    private final Pose intakeNearFlower = poseFactory.of(48, 130, 90);
+    private final Pose prepareIntakeNearFlower = poseFactory.of(44, 120, 90);
+    private final Pose intakeNearFlower = poseFactory.of(44, 130, 90);
     private final Pose prepareParkPose = poseFactory.of(48, 120, 90);
-    private final Pose parkPose = poseFactory.of(100, 132, 0);
+    private final Pose parkPose = poseFactory.of(95, 132, 0);
     private final Pose shootNearFlowerPose = poseFactory.of(120, 105, 45);
     private final Pose intakeFarFlowerPose = poseFactory.of(127, 96, 0);
     private final Pose shootFarFlowerPose = poseFactory.of(124, 88, 0);
@@ -115,7 +115,14 @@ public class AutoHiveUpFull_safe extends OpMode {
                 commands.startTransfer,
                 alignToShoot,
                 commands.openGate,
-                waitMs(1000)
+                waitMs(1200)
+        );
+
+        Command shootNoAlign = sequential(
+                commands.startIntake,
+                commands.startTransfer,
+                commands.openGate,
+                waitMs(1200)
         );
 
         Command stopShoot = sequential(
@@ -127,11 +134,12 @@ public class AutoHiveUpFull_safe extends OpMode {
         autoRoutine = sequential(
                 commands.startFlyWheel,
                 waitUntil(() -> commands.flywheelAtSpeed()),
-                shoot,
+                shootNoAlign,
                 stopShoot,
                 follow(follower, prepareIntakeGarden()),
                 commands.startIntake,
                 commands.startTransfer,
+                waitMs(200),
                 driveOnTimer(commands.FLOWER_INTAKE_POWER,2000),
                 commands.stopIntake,
                 commands.stopTransfer,
@@ -144,6 +152,7 @@ public class AutoHiveUpFull_safe extends OpMode {
                 follow(follower, prepareIntakeNearFlower()),
                 commands.startIntake,
                 commands.startTransfer,
+                waitMs(200),
                 driveOnTimer(commands.FLOWER_INTAKE_POWER,1000),
                 waitMs(2000),
                 commands.stopIntake,
@@ -158,6 +167,7 @@ public class AutoHiveUpFull_safe extends OpMode {
                 commands.startIntake,
                 commands.startTransfer,
                 follow(follower, prepareIntakeFarFlower()),
+                waitMs(200),
                 driveOnTimer(commands.FLOWER_INTAKE_POWER,1000),
                 waitMs(2000),
                 commands.startIntake,
@@ -167,7 +177,8 @@ public class AutoHiveUpFull_safe extends OpMode {
                 waitUntil(() -> commands.flywheelAtSpeed()),
                 shoot,
                 stopShoot,
-                commands.stopFlyWheel
+                commands.stopFlyWheel,
+                follow(follower, park())
         );
     }
 
