@@ -40,21 +40,24 @@ public class Commands {
     public static double FLY_ALPHA = 0.25;       // сглаживание скорости (0..1, меньше = плавнее)
     public static double NOMINAL_VOLTAGE = 13.0;
     public static double AT_SPEED_TOL = 0.07;    // допуск ±3%
+    public static double xCorrection = 0;
+    public static double yCorrection = 0;
 
     public static double GOAL_H = 50.36;
     public static double PEAK_DISTANCE = 0;
     public static double BALL_CONSTANT = 625;
     public double FLOWER_INTAKE_POWER = 0.3;
-    public static double Flywheel_K=3.9604;
+    public static double Flywheel_K=3.7604;
     public static double Flywheel_B=2090.35;
+    public static double HEADING_KP = 0.02;
 
     public double realRPM = 0;
     private double flyVel = 0;                   // сглаженная скорость, тики/с
     private boolean flyVelInit = false;
     private double hoodAngle = 0;
     private final PoseFactory poseFactory = PoseFactory.degrees();
-    private final Pose leftHive = poseFactory.of(144-53.419, 84.75, 0);
-    private final Pose rightHive = poseFactory.of(53.419, 84.75, 0); // mozhno menyat X
+    private final Pose leftHive = poseFactory.of(144-52.419, 84.75, 0);
+    private final Pose rightHive = poseFactory.of(52.419, 84.75, 0); // mozhno menyat X
     double k = (Config.hoodDownPose - Config.hoodUpPose) / (Config.hoodDownAngle - Config.hoodUpAngle);
     double b = Config.hoodDownPose - Config.hoodDownAngle * k;
     Telemetry telemetry;
@@ -158,11 +161,12 @@ public class Commands {
 
         Pose hive = isLeftHive ? leftHive : rightHive;
 
-        double distance = Math.max(Math.hypot(robotX - hive.x(), robotY - hive.y()) - 5 + distanceTrimInches, 0);
+
+        double distance = Math.max(Math.hypot(robotX - hive.x() + xCorrection, robotY - hive.y() + yCorrection) - 5 + distanceTrimInches, 0);
 
         iterAngle = Math.toDegrees(Math.atan(2 * GOAL_H / distance));
 
-        double iterHeading = normalizeAngle(180 + Math.toDegrees(Math.atan2(hive.y() - robotY, hive.x() - robotX)));
+        double iterHeading = normalizeAngle(180 + Math.toDegrees(Math.atan2(hive.y()+yCorrection - robotY, hive.x()+xCorrection - robotX)));
         double Flywheel_coeff = Flywheel_K*distance+Flywheel_B;
         targetRpm = Flywheel_coeff/sin(Math.toRadians(iterAngle));
 
@@ -175,6 +179,9 @@ public class Commands {
         telemetry.addData("RPM", realRPM);
         telemetry.addData("RPM diff", targetRpm-realRPM);
         telemetry.addData("angle", iterAngle);
+        telemetry.addData("X correction", xCorrection);
+        telemetry.addData("Y correction", yCorrection);
+
 
 
         return iterHeading;

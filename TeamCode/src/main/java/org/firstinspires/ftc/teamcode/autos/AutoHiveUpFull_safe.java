@@ -45,7 +45,7 @@ public class AutoHiveUpFull_safe extends OpMode {
     private final Pose shootNearFlowerPose = poseFactory.of(120, 105, 45);
     private final Pose intakeFarFlowerPose = poseFactory.of(127, 96, 0);
     private final Pose shootFarFlowerPose = poseFactory.of(124, 88, 0);
-    private final Pose prepareIntakeFarFlowerPose = poseFactory.of(117, 96, 0);
+    private final Pose prepareIntakeFarFlowerPose = poseFactory.of(117, 101, 0);
     // Path methods
     private Path prepareIntakeGarden() {
         return line(startPose, prepareIntakeGardenPose).linear(startPose, prepareIntakeGardenPose);
@@ -81,15 +81,25 @@ public class AutoHiveUpFull_safe extends OpMode {
         return line(shootFarFlowerPose, parkPose).linear(shootFarFlowerPose, parkPose);
     }
     private Command autoRoutine;
-    private Command driveOnTimer(double power, double timeMs) {
+    private Command driveOnTimer(double power, double timeMs, double targetHeadingDeg) {
         ElapsedTime timer = new ElapsedTime();
         return Command.build()
                 .setStart(() -> {
                     timer.reset();
                     follower.stop();
-                }).setExecute(() -> {
-                    waitMs(200);
-                    movement.setPowerAll(power);
+
+                })
+                .setExecute(() -> {
+                    double headingDeg = Math.toDegrees(follower.pose().heading());
+                    double error = movement.normalizeAngle(headingDeg - targetHeadingDeg);
+                    double turn = commands.HEADING_KP * error;
+
+                    double powerL = power + turn;
+                    double powerR = power - turn;
+
+                    // чтобы не вылезти за 1 и сохранить соотношение сторон
+                    double max = Math.max(1, Math.max(Math.abs(powerL), Math.abs(powerR)));
+                    movement.setPowerLeftRight(powerL / max, powerR / max);
                 })
                 .setDone(() -> timer.milliseconds() >= timeMs)
                 .setEnd(endCondition -> {
@@ -140,7 +150,7 @@ public class AutoHiveUpFull_safe extends OpMode {
                 commands.startIntake,
                 commands.startTransfer,
                 waitMs(200),
-                driveOnTimer(commands.FLOWER_INTAKE_POWER,2000),
+                driveOnTimer(commands.FLOWER_INTAKE_POWER,2000, 180),
                 commands.stopIntake,
                 commands.stopTransfer,
                 follow(follower, shootGarden()),
@@ -153,7 +163,7 @@ public class AutoHiveUpFull_safe extends OpMode {
                 commands.startIntake,
                 commands.startTransfer,
                 waitMs(200),
-                driveOnTimer(commands.FLOWER_INTAKE_POWER,1000),
+                driveOnTimer(commands.FLOWER_INTAKE_POWER,1000,90),
                 waitMs(2000),
                 commands.stopIntake,
                 commands.stopTransfer,
@@ -164,11 +174,11 @@ public class AutoHiveUpFull_safe extends OpMode {
                 shoot,
                 stopShoot,
                 commands.lowerRamp,
+                follow(follower, prepareIntakeFarFlower()),
                 commands.startIntake,
                 commands.startTransfer,
-                follow(follower, prepareIntakeFarFlower()),
                 waitMs(200),
-                driveOnTimer(commands.FLOWER_INTAKE_POWER,1000),
+                driveOnTimer(commands.FLOWER_INTAKE_POWER,1000,0),
                 waitMs(2000),
                 commands.startIntake,
                 commands.startTransfer,

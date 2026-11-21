@@ -67,20 +67,31 @@ public class DownEightPark extends OpMode {
         return line(shootFarFlowerPose, prepareIntakeFarFlowerPose).linear(shootFarFlowerPose, prepareIntakeFarFlowerPose);
     }
     private Path park() {
-        return line(prepareIntakeFarFlowerPose, parkPose).linear(prepareIntakeFarFlowerPose, parkPose);
+        return line(shootPreloadPose, parkPose).linear(shootPreloadPose, parkPose);
     }
     private Command autoRoutine;
 
 
 
-    private Command driveOnTimer(double power, double timeMs) {
+    private Command driveOnTimer(double power, double timeMs, double targetHeadingDeg) {
         ElapsedTime timer = new ElapsedTime();
         return Command.build()
                 .setStart(() -> {
                     timer.reset();
                     follower.stop();
-                }).setExecute(() -> {
-                    movement.setPowerAll(power);
+
+                })
+                .setExecute(() -> {
+                    double headingDeg = Math.toDegrees(follower.pose().heading());
+                    double error = movement.normalizeAngle(headingDeg - targetHeadingDeg);
+                    double turn = commands.HEADING_KP * error;
+
+                    double powerL = power + turn;
+                    double powerR = power - turn;
+
+                    // чтобы не вылезти за 1 и сохранить соотношение сторон
+                    double max = Math.max(1, Math.max(Math.abs(powerL), Math.abs(powerR)));
+                    movement.setPowerLeftRight(powerL / max, powerR / max);
                 })
                 .setDone(() -> timer.milliseconds() >= timeMs)
                 .setEnd(endCondition -> {
@@ -122,24 +133,24 @@ public class DownEightPark extends OpMode {
         autoRoutine = sequential(
                 commands.startFlyWheel,
                 follow(follower, shootPreload()),
-                waitMs(1000),
+                waitMs(10000),
                 shoot,
                 stopShoot,
-                commands.lowerRamp,
-                follow(follower, prepareIntakeFarFlower()),
-                commands.startIntake,
-                commands.startTransfer,
-                driveOnTimer(commands.FLOWER_INTAKE_POWER,1500),
-                waitMs(1500),
-                commands.stopIntake,
-                commands.stopTransfer,
-                follow(follower,backFarFlower()),
-                follow(follower, shootFarFlower()),
-
-                waitUntil(() -> commands.flywheelAtSpeed()),
-                stopShoot,commands.raiseRamp,
-                shoot,
-                follow(follower, preparePark()),
+//                commands.lowerRamp,
+//                follow(follower, prepareIntakeFarFlower()),
+//                commands.startIntake,
+//                commands.startTransfer,
+//                driveOnTimer(commands.FLOWER_INTAKE_POWER,1500),
+//                waitMs(1500),
+//                commands.stopIntake,
+//                commands.stopTransfer,
+//                follow(follower,backFarFlower()),
+//                follow(follower, shootFarFlower()),
+//
+//                waitUntil(() -> commands.flywheelAtSpeed()),
+//                stopShoot,commands.raiseRamp,
+//                shoot,
+//                follow(follower, preparePark()),
                 follow(follower, park()),
                 commands.stopFlyWheel
         );

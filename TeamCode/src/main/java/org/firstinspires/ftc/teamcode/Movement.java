@@ -64,6 +64,13 @@ public class Movement {
         backRight.setPower(power);
     }
 
+    public void setPowerLeftRight(double powerL,double powerR) {
+        frontLeft.setPower(powerL);
+        frontRight.setPower(powerR);
+        backLeft.setPower(powerL);
+        backRight.setPower(powerR);
+    }
+
     /**
      * @param x, y             движение в системе робота (как раньше)
      * @param stickRight       правый стик вправо  (gamepad.right_stick_x)
@@ -73,7 +80,7 @@ public class Movement {
      * @param calculatedTarget угол на цель, градусы
      */
     public void drive(double x, double y, double stickRight, double stickUp,
-                      double heading, boolean shooting, double calculatedTarget) {
+                      double heading, boolean shooting, double calculatedTarget, double headingTrim) {
         heading = normalizeAngle(heading);
         double deltaTime = getDeltaTimeSec();
 
@@ -90,7 +97,7 @@ public class Movement {
             // Диагонали делят стик на 4 сектора: это то же самое,
             // что округлить угол стика до ближайших 90°.
             if (Math.hypot(stickRight, stickUp) > SNAP_DEADZONE) {
-                newTarget = snapTo90(stickAngleToField(stickRight, stickUp));
+                newTarget = snapTo90(stickAngleToField(stickRight, stickUp))+headingTrim;
             }
             // Стик отпущен — держим последний угол
             kP = drivekP;

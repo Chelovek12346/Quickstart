@@ -100,7 +100,8 @@ public class Teleop extends OpMode {
                 -gamepad1.right_stick_y,   // стик вверх
                 Math.toDegrees(heading),
                 shooting,
-                targetHeading
+                targetHeading,
+                headingTrimDeg
         );
 
         follower.update();
@@ -161,22 +162,26 @@ public class Teleop extends OpMode {
             schedule(commands.reverseTransfer);
         }
 
-        if (gamepad2.dpadLeftWasPressed()) {
-            headingTrimDeg += 1;
-        }
-        if (gamepad2.dpadRightWasPressed()) {
+        if (gamepad2.bWasPressed()) {
             headingTrimDeg -= 1;
         }
-
+        if (gamepad2.xWasPressed()) {
+            headingTrimDeg += 1;
+        }
         if (gamepad2.dpadUpWasPressed()) {
-            distanceTrimInches += 0.5;
+            commands.yCorrection -= 1;
         }
         if (gamepad2.dpadDownWasPressed()) {
-            distanceTrimInches -= 0.5;
+            commands.yCorrection += 1;
         }
-
-        if (gamepad1.dpadLeftWasPressed() && Math.hypot(follower.pose().x() - 8, follower.pose().y() - 136.72) < 5 && Math.abs(movement.normalizeAngle(Math.toDegrees(heading))) < 4 ){
-            follower.setPose(poseFactory.of(8, 136.72, 0));
+        if (gamepad2.dpadRightWasPressed()) {
+            commands.xCorrection += 1;
+        }
+        if (gamepad2.dpadLeftWasPressed()) {
+            commands.xCorrection -= 1;
+        }
+        if (gamepad1.dpadLeftWasPressed()){
+            follower.setPose(poseFactory.of(8, 136.72, targetHeading));
         }
 
 //        if (gamepad1.dpadUpWasPressed()) {
